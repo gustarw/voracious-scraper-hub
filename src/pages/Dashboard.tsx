@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { FirecrawlService } from "@/services/FirecrawlService";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { TaskList } from "@/components/dashboard/TaskList";
 import { NewTaskForm } from "@/components/dashboard/NewTaskForm";
@@ -34,28 +33,24 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <main className="container mx-auto px-4 py-8">
-        <DashboardHeader />
-        
-        {!hasApiKey ? (
-          <ApiKeySetup onApiKeySaved={handleApiKeySaved} />
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1">
-                <NewTaskForm />
-              </div>
-              <div className="lg:col-span-2">
-                <TaskList />
-              </div>
+    <DashboardLayout>
+      <DashboardHeader />
+      
+      {!hasApiKey ? (
+        <ApiKeySetup onApiKeySaved={handleApiKeySaved} />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <NewTaskForm />
             </div>
-          </>
-        )}
-      </main>
-      <Footer />
-    </div>
+            <div className="lg:col-span-2">
+              <TaskList />
+            </div>
+          </div>
+        </>
+      )}
+    </DashboardLayout>
   );
 };
 
