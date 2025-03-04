@@ -5,8 +5,17 @@ import { Hero } from "@/components/home/Hero";
 import { Features } from "@/components/home/Features";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { CallToAction } from "@/components/home/CallToAction";
+import { useAuth } from "@/context/AuthContext";
+import { Navigate } from "react-router-dom";
 
 const Index = () => {
+  const { user } = useAuth();
+  
+  // Uncomment this if you want to automatically redirect logged-in users to dashboard
+  // if (user) {
+  //   return <Navigate to="/dashboard" replace />;
+  // }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />

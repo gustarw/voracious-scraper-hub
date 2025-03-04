@@ -5,10 +5,12 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,14 +35,40 @@ export function Navbar() {
         <nav className="hidden md:flex items-center space-x-8">
           <NavLinks />
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" className="text-white hover:text-scrapvorn-orange">
-              Login
-            </Button>
-            <Button 
-              className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium"
-            >
-              Get Started
-            </Button>
+            {user ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-scrapvorn-orange"
+                  asChild
+                >
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-scrapvorn-orange"
+                  onClick={() => signOut()}
+                >
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-scrapvorn-orange"
+                  asChild
+                >
+                  <Link to="/auth">Login</Link>
+                </Button>
+                <Button 
+                  className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium"
+                  asChild
+                >
+                  <Link to="/auth?tab=register">Registrar</Link>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
 
@@ -62,14 +90,42 @@ export function Navbar() {
         >
           <NavLinks mobile onClickLink={() => setIsMenuOpen(false)} />
           <div className="flex flex-col items-center space-y-4 mt-8">
-            <Button variant="ghost" className="text-white hover:text-scrapvorn-orange w-full">
-              Login
-            </Button>
-            <Button 
-              className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium w-full"
-            >
-              Get Started
-            </Button>
+            {user ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-scrapvorn-orange w-full"
+                  asChild
+                >
+                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                </Button>
+                <Button 
+                  className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium w-full"
+                  onClick={() => {
+                    signOut();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Sair
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:text-scrapvorn-orange w-full"
+                  asChild
+                >
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                </Button>
+                <Button 
+                  className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium w-full"
+                  asChild
+                >
+                  <Link to="/auth?tab=register" onClick={() => setIsMenuOpen(false)}>Registrar</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

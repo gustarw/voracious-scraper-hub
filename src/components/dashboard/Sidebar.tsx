@@ -17,6 +17,7 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 type SidebarItem = {
   icon: React.ElementType;
@@ -27,6 +28,7 @@ type SidebarItem = {
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { signOut } = useAuth();
   
   const menuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
@@ -102,6 +104,7 @@ export function Sidebar() {
             "w-full text-scrapvorn-gray hover:text-white hover:bg-white/5 flex items-center",
             collapsed ? "justify-center" : "justify-start"
           )}
+          onClick={signOut}
         >
           <LogOut size={20} className={collapsed ? "mx-auto" : "mr-3"} />
           {!collapsed && <span>Sair</span>}

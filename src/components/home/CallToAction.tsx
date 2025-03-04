@@ -2,8 +2,11 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export function CallToAction() {
+  const { user } = useAuth();
+  
   return (
     <section className="py-32 relative overflow-hidden">
       {/* Background */}
@@ -30,8 +33,8 @@ export function CallToAction() {
               className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium px-8 py-6 rounded-lg group"
               asChild
             >
-              <Link to="/dashboard">
-                Começar a Extrair Agora
+              <Link to={user ? "/dashboard" : "/auth"}>
+                {user ? "Ir para o Dashboard" : "Começar a Extrair Agora"}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
