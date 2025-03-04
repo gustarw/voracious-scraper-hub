@@ -5,13 +5,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Spider,
+  Globe,
   Filter,
   Calendar,
   Download,
   FolderKanban,
   Webhook,
-  Api,
+  Code,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -30,13 +30,13 @@ export function Sidebar() {
   
   const menuItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-    { icon: Spider, label: "Scraping", href: "/dashboard/scraping" },
+    { icon: Globe, label: "Scraping", href: "/dashboard/scraping" },
     { icon: Filter, label: "Filtros", href: "/dashboard/filtros" },
     { icon: Calendar, label: "Agendamento", href: "/dashboard/agendamento" },
     { icon: Download, label: "Exportação", href: "/dashboard/exportacao" },
     { icon: FolderKanban, label: "Projetos", href: "/dashboard/projetos" },
     { icon: Webhook, label: "Webhooks", href: "/dashboard/webhooks" },
-    { icon: Api, label: "Integração APIs", href: "/dashboard/apis" },
+    { icon: Code, label: "Integração APIs", href: "/dashboard/apis" },
     { icon: Settings, label: "Configurações", href: "/dashboard/configuracoes" },
   ];
 
