@@ -1,40 +1,40 @@
 
-import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Bell, Search } from "lucide-react";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useAuth } from "@/context/AuthContext";
 
 export function DashboardHeader() {
+  const { profile } = useAuth();
+  
   return (
-    <div className="mb-10">
-      <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <p className="text-scrapvorn-gray mb-4 sm:mb-0">
-          Gerencie suas tarefas de extração de dados e visualize os resultados.
-        </p>
-        <Button variant="outline" className="border-scrapvorn-gray/30 hover:bg-white/5">
-          Documentação <ArrowUpRight className="ml-2 h-4 w-4" />
-        </Button>
+    <div className="flex items-center justify-between px-4 py-3 border-b border-scrapvorn-gray/10">
+      <div className="flex items-center w-full max-w-md">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-scrapvorn-gray h-4 w-4" />
+          <Input
+            type="search"
+            placeholder="Pesquisar..."
+            className="pl-10 bg-black border-scrapvorn-gray/20 focus:border-scrapvorn-orange/50 w-full"
+          />
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-        <StatCard title="Tarefas Totais" value="0" />
-        <StatCard title="Tarefas Concluídas" value="0" />
-        <StatCard title="Páginas Extraídas" value="0" />
-        <StatCard title="Créditos Utilizados" value="0" />
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="icon" className="text-scrapvorn-gray">
+          <Bell className="h-5 w-5" />
+          <span className="sr-only">Notificações</span>
+        </Button>
+        
+        <div className="flex items-center space-x-3">
+          <div className="hidden md:block text-right">
+            <p className="text-sm font-medium">{profile?.username || "Usuário"}</p>
+            <p className="text-xs text-scrapvorn-gray">Conta Pro</p>
+          </div>
+          <UserAvatar />
+        </div>
       </div>
-    </div>
-  );
-}
-
-interface StatCardProps {
-  title: string;
-  value: string;
-}
-
-function StatCard({ title, value }: StatCardProps) {
-  return (
-    <div className="bg-white/5 rounded-lg p-4 border border-scrapvorn-gray/10">
-      <p className="text-scrapvorn-gray text-sm mb-1">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
     </div>
   );
 }

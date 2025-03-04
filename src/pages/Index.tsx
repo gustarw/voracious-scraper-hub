@@ -9,12 +9,12 @@ import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   
-  // Uncomment this if you want to automatically redirect logged-in users to dashboard
-  // if (user) {
-  //   return <Navigate to="/dashboard" replace />;
-  // }
+  // Redirect logged-in users to dashboard
+  if (user && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
