@@ -64,7 +64,7 @@ export const UserAvatar = ({ className }: UserAvatarProps) => {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/dashboard/configuracoes")}>
+        <DropdownMenuItem onClick={() => navigate("/dashboard/perfil")}>
           <User className="mr-2 h-4 w-4" />
           <span>Perfil</span>
         </DropdownMenuItem>
