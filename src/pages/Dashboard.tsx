@@ -8,29 +8,14 @@ import { NewTaskForm } from "@/components/dashboard/NewTaskForm";
 import { ApiKeySetup } from "@/components/dashboard/ApiKeySetup";
 
 const Dashboard = () => {
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
+  const [hasApiKey, setHasApiKey] = useState(() => {
     const apiKey = FirecrawlService.getApiKey();
-    setHasApiKey(!!apiKey);
-    setIsLoading(false);
-  }, []);
+    return !!apiKey;
+  });
 
   const handleApiKeySaved = () => {
     setHasApiKey(true);
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-scrapvorn-orange border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <DashboardLayout>

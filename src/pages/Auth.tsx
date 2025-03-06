@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/ui/Logo";
+import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -77,9 +78,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+    <RedirectIfAuthenticated>
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <Logo className="h-12 mx-auto mb-4" />
             <h1 className="text-2xl font-bold">Bem-vindo ao Scrapvorn</h1>
@@ -184,9 +186,10 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
           </div>
+          </div>
         </div>
       </div>
-    </div>
+    </RedirectIfAuthenticated>
   );
 };
 

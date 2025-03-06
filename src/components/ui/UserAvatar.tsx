@@ -23,12 +23,22 @@ export const UserAvatar = ({ className }: UserAvatarProps) => {
   const { toast } = useToast();
   
   const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: "Logout realizado",
-      description: "Você foi desconectado com sucesso."
-    });
-    navigate("/");
+    try {
+      await signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
+      });
+      // Forçar recarregamento da página após o logout para limpar o estado
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast({
+        title: "Erro ao fazer logout",
+        description: "Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
   
   const getInitials = () => {
