@@ -41,7 +41,7 @@ export function CallToAction() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-scrapvorn-gray/30 hover:bg-white/5 text-white"
+              className="border-scrapvorn-gray/30 hover:bg-white/5 text-scrapvorn-orange hover:text-scrapvorn-orangeLight"
             >
               Agendar uma Demo
             </Button>

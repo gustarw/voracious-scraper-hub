@@ -15,9 +15,8 @@ export function Logo({ className, size = "md", compact = false }: LogoProps) {
   };
 
   return (
-    <div className={cn("flex items-center gap-1 font-bold", sizeClasses[size], className)}>
-      <span className="text-scrapvorn-orange">{compact ? "S" : "Scrap"}</span>
-      <span className="text-white">{compact ? "v" : "vorn"}</span>
+    <div className={cn("flex items-center font-bold", sizeClasses[size], className)}>
+      <span className="text-scrapvorn-orange">{compact ? "S" : "Scrap"}</span><span className="text-white">{compact ? "V" : "Vorn"}</span>
     </div>
   );
 }
