@@ -1,4 +1,3 @@
-
 interface ScrapingTask {
   id: string;
   url: string;
@@ -33,6 +32,22 @@ export class FirecrawlService {
 
   static getApiKey(): string | null {
     return localStorage.getItem(this.API_KEY_STORAGE_KEY);
+  }
+
+  static async crawlWebsite(url: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      // Create a new scraping task
+      const task = await this.createScrapingTask(url);
+      
+      // Execute the task immediately
+      return await this.executeScrapingTask(task.id);
+    } catch (error) {
+      console.error('Error in crawlWebsite:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to crawl website' 
+      };
+    }
   }
 
   static async createScrapingTask(url: string, settings = {}): Promise<ScrapingTask> {
