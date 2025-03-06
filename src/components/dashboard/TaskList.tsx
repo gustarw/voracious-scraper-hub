@@ -3,25 +3,41 @@ import { useState, useEffect } from "react";
 import { FirecrawlService } from "@/services/FirecrawlService";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ExternalLink, Clock, CheckCircle, 
   XCircle, MoreHorizontal, Trash2
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function TaskList() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    loadTasks();
-  }, []);
+    if (user) {
+      loadTasks();
+    }
+  }, [user]);
   
-  const loadTasks = () => {
+  const loadTasks = async () => {
     setIsLoading(true);
-    const taskData = FirecrawlService.getScrapingTasks();
-    setTasks(taskData);
-    setIsLoading(false);
+    try {
+      // For now, we're using the mock service while we set up the real implementation
+      const taskData = FirecrawlService.getScrapingTasks();
+      setTasks(taskData);
+    } catch (error) {
+      console.error("Error loading tasks:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar as tarefas",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleDeleteTask = (taskId: string) => {

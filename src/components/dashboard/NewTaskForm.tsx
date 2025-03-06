@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Globe } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export function NewTaskForm() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [url, setUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -23,10 +26,19 @@ export function NewTaskForm() {
       return;
     }
     
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para criar uma tarefa",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // Create a new scraping task
+      // For now, we're using the mock service while we set up the real implementation
       const task = await FirecrawlService.createScrapingTask(url);
       
       // Execute the task immediately
@@ -46,6 +58,7 @@ export function NewTaskForm() {
         });
       }
     } catch (error) {
+      console.error("Error creating task:", error);
       toast({
         title: "Erro",
         description: "Falha ao criar a tarefa de scraping",
