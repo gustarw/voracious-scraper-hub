@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,7 @@ export function Sidebar() {
     { icon: Download, label: "Exportação", href: "/dashboard/exportacao" },
     { icon: FolderKanban, label: "Projetos", href: "/dashboard/projetos" },
     { icon: Webhook, label: "Webhooks", href: "/dashboard/webhooks" },
-    { icon: Code, label: "Integração APIs", href: "/dashboard/apis" },
+    { icon: Code, label: "Integração APIs", href: "/dashboard/integracao-apis" },
     { icon: Settings, label: "Configurações", href: "/dashboard/configuracoes" },
   ];
 
