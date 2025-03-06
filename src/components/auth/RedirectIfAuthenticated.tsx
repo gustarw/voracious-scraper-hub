@@ -1,4 +1,5 @@
-import { ReactNode, useEffect } from 'react';
+
+import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
@@ -8,13 +9,26 @@ interface RedirectIfAuthenticatedProps {
 
 export const RedirectIfAuthenticated = ({ children }: RedirectIfAuthenticatedProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (!loading && user && !isRedirecting) {
+      setIsRedirecting(true);
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate, isRedirecting]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-scrapvorn-orange border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return user ? null : <>{children}</>;
 };

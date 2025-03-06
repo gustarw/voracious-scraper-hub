@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session, AuthError } from "@supabase/supabase-js";
@@ -47,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Efeito para inicialização e limpeza
   useEffect(() => {
+    console.log("AuthProvider: Initializing auth state");
     let mounted = true;
 
     // Função para buscar e atualizar o perfil
@@ -59,7 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Função para atualizar estado do usuário
     const updateUserState = async (newSession: Session | null) => {
       if (!mounted) return;
-
+      
+      console.log("Auth state update:", newSession ? "User logged in" : "No user");
+      
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
@@ -73,8 +77,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Inicializar sessão
     const initSession = async () => {
       try {
+        console.log("Getting initial session");
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        
+        if (error) {
+          console.error('Erro ao inicializar sessão:', error);
+          throw error;
+        }
+        
+        console.log("Initial session result:", session ? "Session found" : "No session");
         await updateUserState(session);
       } catch (error) {
         console.error('Erro ao inicializar sessão:', error);
@@ -84,7 +95,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
         }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          console.log("Initial auth loading complete");
+          setLoading(false);
+        }
       }
     };
 
@@ -93,13 +107,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Configurar listener de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log("Auth state change event:", event);
         if (!mounted) return;
         await updateUserState(session);
       }
     );
 
     return () => {
+      console.log("AuthProvider: Cleaning up");
       mounted = false;
       subscription.unsubscribe();
     };
