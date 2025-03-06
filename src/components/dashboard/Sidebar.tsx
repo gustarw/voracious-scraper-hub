@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/Logo";
 import {
   LayoutDashboard,
   Globe,
@@ -55,11 +55,7 @@ export function Sidebar() {
     >
       <div className="p-4 flex items-center justify-between border-b border-scrapvorn-gray/10">
         <div className={cn("flex items-center", collapsed ? "justify-center w-full" : "")}>
-          {collapsed ? (
-            <span className="text-scrapvorn-orange font-bold text-2xl">S</span>
-          ) : (
-            <span className="text-scrapvorn-orange font-bold text-xl">Scrapvorn</span>
-          )}
+          <Logo className={cn("w-auto", collapsed ? "h-8" : "h-10")} compact={collapsed} />
         </div>
         <Button
           variant="ghost"
