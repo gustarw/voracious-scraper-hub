@@ -25,13 +25,13 @@ export function Navbar() {
               <Link to="/" className="text-scrapvorn-gray hover:text-white transition-colors">
                 Início
               </Link>
-              <Link to="#features" className="text-scrapvorn-gray hover:text-white transition-colors">
+              <Link to="/funcionalidades" className="text-scrapvorn-gray hover:text-white transition-colors">
                 Funcionalidades
               </Link>
-              <Link to="#how-it-works" className="text-scrapvorn-gray hover:text-white transition-colors">
+              <Link to="/como-funciona" className="text-scrapvorn-gray hover:text-white transition-colors">
                 Como Funciona
               </Link>
-              <Link to="#pricing" className="text-scrapvorn-gray hover:text-white transition-colors">
+              <Link to="/precos" className="text-scrapvorn-gray hover:text-white transition-colors">
                 Preços
               </Link>
             </nav>
@@ -68,13 +68,13 @@ export function Navbar() {
                   <Link to="/" className="text-lg font-medium">
                     Início
                   </Link>
-                  <Link to="#features" className="text-lg font-medium">
+                  <Link to="/funcionalidades" className="text-lg font-medium">
                     Funcionalidades
                   </Link>
-                  <Link to="#how-it-works" className="text-lg font-medium">
+                  <Link to="/como-funciona" className="text-lg font-medium">
                     Como Funciona
                   </Link>
-                  <Link to="#pricing" className="text-lg font-medium">
+                  <Link to="/precos" className="text-lg font-medium">
                     Preços
                   </Link>
                   

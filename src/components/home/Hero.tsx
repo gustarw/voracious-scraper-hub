@@ -2,6 +2,7 @@
 import { ArrowRight, Database, Code, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export function Hero() {
   return (
@@ -31,16 +32,22 @@ export function Hero() {
             <Button 
               size="lg" 
               className="bg-scrapvorn-orange hover:bg-scrapvorn-orangeLight text-black font-medium px-8 py-6 rounded-lg group"
+              asChild
             >
-              Começar a Extrair 
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <Link to="/auth?tab=register">
+                Começar a Extrair 
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="border-scrapvorn-gray/30 hover:bg-white/5 text-scrapvorn-orange hover:text-scrapvorn-orangeLight"
+              asChild
             >
-              Ver Demonstração
+              <Link to="/como-funciona">
+                Ver Demonstração
+              </Link>
             </Button>
           </div>
           
@@ -69,17 +76,20 @@ export function Hero() {
             {
               icon: Database,
               title: "Extração Poderosa",
-              description: "Extraia dados de qualquer site com precisão e velocidade."
+              description: "Extraia dados de qualquer site com precisão e velocidade.",
+              link: "/funcionalidades"
             },
             {
               icon: Code,
               title: "Filtros Avançados",
-              description: "Filtre e transforme seus dados com nosso poderoso motor de consultas."
+              description: "Filtre e transforme seus dados com nosso poderoso motor de consultas.",
+              link: "/funcionalidades"
             },
             {
               icon: Shield,
               title: "Seguro & Confiável",
-              description: "Segurança de nível empresarial com proxies rotativos e limitadores de taxa."
+              description: "Segurança de nível empresarial com proxies rotativos e limitadores de taxa.",
+              link: "/como-funciona"
             }
           ].map((feature, index) => (
             <FeatureCard 
@@ -87,6 +97,7 @@ export function Hero() {
               icon={feature.icon}
               title={feature.title}
               description={feature.description}
+              link={feature.link}
               index={index}
             />
           ))}
@@ -108,12 +119,14 @@ interface FeatureCardProps {
   icon: React.ElementType;
   title: string;
   description: string;
+  link: string;
   index: number;
 }
 
-function FeatureCard({ icon: Icon, title, description, index }: FeatureCardProps) {
+function FeatureCard({ icon: Icon, title, description, link, index }: FeatureCardProps) {
   return (
-    <div 
+    <Link 
+      to={link}
       className={cn(
         "group p-6 rounded-xl border border-scrapvorn-gray/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm hover:border-scrapvorn-orange/30 transition-all duration-300 animate-slide-up",
       )}
@@ -124,6 +137,6 @@ function FeatureCard({ icon: Icon, title, description, index }: FeatureCardProps
       </div>
       <h3 className="font-medium text-xl text-white mb-2">{title}</h3>
       <p className="text-scrapvorn-gray">{description}</p>
-    </div>
+    </Link>
   );
 }

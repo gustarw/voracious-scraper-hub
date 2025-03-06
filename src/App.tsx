@@ -9,6 +9,9 @@ import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import NotFound from "@/pages/NotFound";
+import Functionalities from "@/pages/Functionalities";
+import HowItWorks from "@/pages/HowItWorks";
+import Pricing from "@/pages/Pricing";
 
 // Dashboard pages
 import Scraping from "@/pages/dashboard/Scraping";
@@ -28,6 +31,9 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/funcionalidades" element={<Functionalities />} />
+          <Route path="/como-funciona" element={<HowItWorks />} />
+          <Route path="/precos" element={<Pricing />} />
           
           {/* Protected Routes */}
           <Route 
