@@ -22,6 +22,9 @@ import Agendamento from "@/pages/dashboard/Agendamento";
 import IntegracaoAPIs from "@/pages/dashboard/IntegracaoAPIs";
 import Webhooks from "@/pages/dashboard/Webhooks";
 import Configuracoes from "@/pages/dashboard/Configuracoes";
+import Perfil from "@/pages/dashboard/Perfil";
+import Assinatura from "@/pages/dashboard/Assinatura";
+import AssinaturaSucesso from "@/pages/dashboard/AssinaturaSucesso";
 
 function App() {
   return (
@@ -105,6 +108,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Configuracoes />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/perfil" 
+            element={
+              <ProtectedRoute>
+                <Perfil />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/assinatura" 
+            element={
+              <ProtectedRoute>
+                <Assinatura />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/assinatura/sucesso" 
+            element={
+              <ProtectedRoute>
+                <AssinaturaSucesso />
               </ProtectedRoute>
             } 
           />
