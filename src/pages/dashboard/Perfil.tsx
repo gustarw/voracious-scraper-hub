@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase"; // Updated Supabase client import path
+import { supabase } from "@/lib/supabase"; // Updated import path
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,6 @@ const Perfil = () => {
     checkAuth();
   }, [navigate, refreshProfile, toast]); // Adicionando dependências necessárias
   
-
   // Atualizar estados locais quando o perfil mudar
   useEffect(() => {
     console.log('Perfil atualizado:', profile);

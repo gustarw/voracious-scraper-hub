@@ -11,8 +11,8 @@ const createAvatarBucket = async () => {
   try {
     const { data, error } = await supabase.storage.getBucket('avatars');
     
-    // If the bucket doesn't exist (404 error), create it
-    if (error && error.message.includes('does not exist')) {
+    // If the bucket doesn't exist (error message contains 'does not exist'), create it
+    if (error && error.message && error.message.includes('does not exist')) {
       console.log('Creating avatars bucket...');
       const { error: createError } = await supabase.storage.createBucket('avatars', {
         public: true,
