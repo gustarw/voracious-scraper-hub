@@ -14,11 +14,11 @@ const Dashboard = () => {
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading stats
+    // Simulate loading stats with shorter timeout
     const timer = setTimeout(() => {
       setRecentScrapes(Math.floor(Math.random() * 8) + 1);
       setStatsLoading(false);
-    }, 1500);
+    }, 1000); // Reduced from 1500ms to 1000ms
     
     return () => clearTimeout(timer);
   }, []);
@@ -28,7 +28,7 @@ const Dashboard = () => {
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <div className="w-10 h-10 border-4 border-scrapvorn-orange border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-scrapvorn-gray">
+          <p className="text-white">
             Carregando informações...
           </p>
         </div>
@@ -45,10 +45,10 @@ const Dashboard = () => {
         <section className="p-6 glass-panel">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">
+              <h2 className="text-2xl font-bold mb-2 text-white">
                 Bem-vindo{profile?.username ? `, ${profile.username}` : ''}!
               </h2>
-              <p className="text-secondary mb-2">
+              <p className="text-white/90 mb-2">
                 Esta é sua central de monitoramento de dados. Comece extraindo dados com facilidade.
               </p>
             </div>
@@ -65,11 +65,11 @@ const Dashboard = () => {
         
         {/* Stats overview */}
         <section>
-          <h3 className="text-xl font-medium mb-4 text-white/90">Visão Geral</h3>
+          <h3 className="text-xl font-medium mb-4 text-white">Visão Geral</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="dashboard-stats-card animate-slide-up" style={{ '--index': 1 } as React.CSSProperties}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-md font-medium text-white/70 flex items-center">
+                <CardTitle className="text-md font-medium text-white flex items-center">
                   <Globe className="mr-2 h-4 w-4 text-scrapvorn-orange" />
                   Extrações Recentes
                 </CardTitle>
@@ -88,7 +88,7 @@ const Dashboard = () => {
             
             <Card className="dashboard-stats-card animate-slide-up" style={{ '--index': 2 } as React.CSSProperties}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-md font-medium text-white/70 flex items-center">
+                <CardTitle className="text-md font-medium text-white flex items-center">
                   <Clock className="mr-2 h-4 w-4 text-scrapvorn-orange" />
                   Próximo Agendamento
                 </CardTitle>
@@ -111,7 +111,7 @@ const Dashboard = () => {
             
             <Card className="dashboard-stats-card animate-slide-up" style={{ '--index': 3 } as React.CSSProperties}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-md font-medium text-white/70 flex items-center">
+                <CardTitle className="text-md font-medium text-white flex items-center">
                   <Sparkles className="mr-2 h-4 w-4 text-scrapvorn-orange" />
                   Seu Plano
                 </CardTitle>
@@ -132,30 +132,30 @@ const Dashboard = () => {
         
         {/* Quick access section */}
         <section>
-          <h3 className="text-xl font-medium mb-4 text-white/90">Acesso Rápido</h3>
+          <h3 className="text-xl font-medium mb-4 text-white">Acesso Rápido</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link to="/dashboard/scraping" className="dashboard-card p-6 flex flex-col items-center text-center group">
               <Globe className="h-10 w-10 text-scrapvorn-orange mb-4 group-hover:scale-110 transition-transform" />
               <h4 className="font-medium text-white mb-1">Extração de Dados</h4>
-              <p className="text-sm text-secondary-foreground">Colete dados de qualquer site facilmente</p>
+              <p className="text-sm text-white/90">Colete dados de qualquer site facilmente</p>
             </Link>
             
             <Link to="/dashboard/filtros" className="dashboard-card p-6 flex flex-col items-center text-center group">
               <BarChart3 className="h-10 w-10 text-scrapvorn-orange mb-4 group-hover:scale-110 transition-transform" />
               <h4 className="font-medium text-white mb-1">Filtros Avançados</h4>
-              <p className="text-sm text-secondary-foreground">Configure filtros para dados específicos</p>
+              <p className="text-sm text-white/90">Configure filtros para dados específicos</p>
             </Link>
             
             <Link to="/dashboard/agendamento" className="dashboard-card p-6 flex flex-col items-center text-center group">
               <Clock className="h-10 w-10 text-scrapvorn-orange mb-4 group-hover:scale-110 transition-transform" />
               <h4 className="font-medium text-white mb-1">Agendamento</h4>
-              <p className="text-sm text-secondary-foreground">Automatize suas extrações com agendamentos</p>
+              <p className="text-sm text-white/90">Automatize suas extrações com agendamentos</p>
             </Link>
             
             <Link to="/dashboard/exportacao" className="dashboard-card p-6 flex flex-col items-center text-center group">
               <ArrowRight className="h-10 w-10 text-scrapvorn-orange mb-4 group-hover:scale-110 transition-transform" />
               <h4 className="font-medium text-white mb-1">Exportação</h4>
-              <p className="text-sm text-secondary-foreground">Exporte dados em vários formatos</p>
+              <p className="text-sm text-white/90">Exporte dados em vários formatos</p>
             </Link>
           </div>
         </section>
@@ -164,8 +164,8 @@ const Dashboard = () => {
         <section>
           <div className="flex flex-col items-center justify-center p-8 border border-dashed border-scrapvorn-gray/20 rounded-xl text-center">
             <AlertTriangle className="h-12 w-12 text-scrapvorn-orange/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">Sem atividades recentes</h3>
-            <p className="text-secondary-foreground max-w-md mb-4">
+            <h3 className="text-lg font-medium mb-2 text-white">Sem atividades recentes</h3>
+            <p className="text-white/90 max-w-md mb-4">
               Inicie sua primeira extração de dados para começar a ver suas atividades aqui.
             </p>
             <Link to="/dashboard/scraping">

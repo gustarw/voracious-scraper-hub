@@ -1,3 +1,4 @@
+
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,301,701,300,501,401,901,400&display=swap');
 
 @tailwind base;
@@ -18,11 +19,11 @@
     --primary: 31 88% 59%;
     --primary-foreground: 0 0% 10%;
 
-    --secondary: 210 12% 66%;
+    --secondary: 210 12% 86%;  /* Lightened from 66% to 86% */
     --secondary-foreground: 0 0% 0%;
 
     --muted: 210 40% 10%;
-    --muted-foreground: 215.4 16.3% 70%;
+    --muted-foreground: 215.4 16.3% 85%;  /* Lightened from 70% to 85% */
 
     --accent: 31 88% 59%;
     --accent-foreground: 0 0% 10%;
@@ -57,7 +58,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium tracking-tight;
+    @apply font-medium tracking-tight text-white;  /* Ensuring headings are always white */
   }
 
   h1 {
@@ -70,6 +71,10 @@
 
   h3 {
     @apply text-2xl sm:text-3xl;
+  }
+
+  p, span, li {
+    @apply text-white/90;  /* Making all text content slightly lighter for better visibility */
   }
 }
 
@@ -140,7 +145,7 @@ button, a, input, select, textarea {
 }
 
 .dashboard-stats-label {
-  @apply text-sm text-white/70;
+  @apply text-sm text-white/90;  /* Improved from 70% to 90% for better visibility */
 }
 
 .dashboard-highlight {
@@ -189,4 +194,13 @@ button, a, input, select, textarea {
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* Improved text contrast for dashboard */
+.text-secondary {
+  @apply text-white/90 !important;  /* Force higher contrast */
+}
+
+.text-secondary-foreground {
+  @apply text-white/90 !important;  /* Force higher contrast */
 }

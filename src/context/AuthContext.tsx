@@ -45,12 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
 
-  // Function to fetch user profile from database
+  // Function to fetch user profile from database with optimized query
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, username, email, avatar_url, updated_at')
         .eq('id', userId)
         .single();
 
@@ -82,7 +82,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check active session
     const getSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        // Optimize session check with a timeout to prevent long waits
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timed out')), 3000)
+        );
+        
+        const { data, error } = await Promise.race([sessionPromise, timeoutPromise])
+          .then(result => result as Awaited<ReturnType<typeof supabase.auth.getSession>>)
+          .catch(error => {
+            console.error('Session check timed out:', error);
+            return { data: null, error };
+          });
         
         if (error) {
           console.error('Error getting session:', error);
@@ -97,8 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userData);
           
           // Fetch user profile
-          const profileData = await fetchProfile(userData.id);
-          setProfile(profileData);
+          fetchProfile(userData.id).then(profileData => {
+            setProfile(profileData);
+          });
         } else {
           setUser(null);
           setProfile(null);
@@ -128,8 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(userData);
           
           // Fetch profile when auth state changes
-          const profileData = await fetchProfile(userData.id);
-          setProfile(profileData);
+          fetchProfile(userData.id).then(profileData => {
+            setProfile(profileData);
+          });
         } else {
           setUser(null);
           setProfile(null);
