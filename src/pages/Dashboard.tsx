@@ -52,14 +52,14 @@ const Dashboard = () => {
                 Esta é sua central de monitoramento de dados. Comece extraindo dados com facilidade.
               </p>
             </div>
-            <Button 
-              className="bg-scrapvorn-orange hover:bg-scrapvorn-orange/90 text-black"
-              as={Link} 
-              to="/dashboard/scraping"
-            >
-              Nova Extração
-              <Globe className="ml-2 h-4 w-4" />
-            </Button>
+            <Link to="/dashboard/scraping">
+              <Button 
+                className="bg-scrapvorn-orange hover:bg-scrapvorn-orange/90 text-black"
+              >
+                Nova Extração
+                <Globe className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </section>
         
@@ -168,13 +168,13 @@ const Dashboard = () => {
             <p className="text-secondary-foreground max-w-md mb-4">
               Inicie sua primeira extração de dados para começar a ver suas atividades aqui.
             </p>
-            <Button 
-              className="bg-scrapvorn-orange hover:bg-scrapvorn-orange/90 text-black"
-              as={Link} 
-              to="/dashboard/scraping"
-            >
-              Começar a Extrair Dados
-            </Button>
+            <Link to="/dashboard/scraping">
+              <Button 
+                className="bg-scrapvorn-orange hover:bg-scrapvorn-orange/90 text-black"
+              >
+                Começar a Extrair Dados
+              </Button>
+            </Link>
           </div>
         </section>
       </div>
