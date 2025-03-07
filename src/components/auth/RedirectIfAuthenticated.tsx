@@ -1,16 +1,26 @@
 
+import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Navigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-interface ProtectedRouteProps {
+interface RedirectIfAuthenticatedProps {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function RedirectIfAuthenticated({ children }: RedirectIfAuthenticatedProps) {
   const { user, loading, initialized } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
+  
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
-  if (loading || !initialized) {
+  useEffect(() => {
+    if (initialized && !loading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, initialized, navigate, from]);
+
+  if (loading || (initialized && user)) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
@@ -19,10 +29,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;
