@@ -8,21 +8,26 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Create storage bucket for avatars if it doesn't exist
 const createAvatarBucket = async () => {
-  const { data, error } = await supabase.storage.getBucket('avatars');
-  
-  if (error && error.status === 404) {
-    console.log('Creating avatars bucket...');
-    const { error: createError } = await supabase.storage.createBucket('avatars', {
-      public: true,
-      fileSizeLimit: 5242880, // 5MB
-      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-    });
+  try {
+    const { data, error } = await supabase.storage.getBucket('avatars');
     
-    if (createError) {
-      console.error('Error creating avatars bucket:', createError);
-    } else {
-      console.log('Avatars bucket created successfully');
+    // If the bucket doesn't exist (404 error), create it
+    if (error && error.message.includes('does not exist')) {
+      console.log('Creating avatars bucket...');
+      const { error: createError } = await supabase.storage.createBucket('avatars', {
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
+      });
+      
+      if (createError) {
+        console.error('Error creating avatars bucket:', createError);
+      } else {
+        console.log('Avatars bucket created successfully');
+      }
     }
+  } catch (error) {
+    console.error('Unexpected error checking for avatars bucket:', error);
   }
 };
 

@@ -8,6 +8,14 @@ interface User {
   email: string;
 }
 
+interface Profile {
+  id: string;
+  username?: string;
+  email?: string;
+  avatar_url?: string;
+  updated_at?: string;
+}
+
 interface SignInResponse {
   user?: User;
   error?: Error;
@@ -19,20 +27,56 @@ interface SignUpOptions {
 
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
   loading: boolean;
   initialized: boolean;
   signIn: (email: string, password: string) => Promise<SignInResponse>;
   signUp: (email: string, password: string, options?: SignUpOptions) => Promise<SignInResponse>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
+
+  // Function to fetch user profile from database
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      return data as Profile;
+    } catch (error) {
+      console.error('Unexpected error fetching profile:', error);
+      return null;
+    }
+  };
+
+  // Public method to refresh the profile
+  const refreshProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  };
 
   useEffect(() => {
     // Check active session
@@ -43,17 +87,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.error('Error getting session:', error);
           setUser(null);
+          setProfile(null);
         } else if (data?.session?.user) {
-          setUser({
+          const userData = {
             id: data.session.user.id,
             email: data.session.user.email || '',
-          });
+          };
+          
+          setUser(userData);
+          
+          // Fetch user profile
+          const profileData = await fetchProfile(userData.id);
+          setProfile(profileData);
         } else {
           setUser(null);
+          setProfile(null);
         }
       } catch (error) {
         console.error('Unexpected error during session check:', error);
         setUser(null);
+        setProfile(null);
       } finally {
         setLoading(false);
         setInitialized(true);
@@ -67,12 +120,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         console.log('Auth state changed:', event);
         if (session?.user) {
-          setUser({
+          const userData = {
             id: session.user.id,
             email: session.user.email || '',
-          });
+          };
+          
+          setUser(userData);
+          
+          // Fetch profile when auth state changes
+          const profileData = await fetchProfile(userData.id);
+          setProfile(profileData);
         } else {
           setUser(null);
+          setProfile(null);
         }
         setLoading(false);
         setInitialized(true);
@@ -102,17 +162,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data?.user) {
-        setUser({
+        const userData = {
           id: data.user.id,
           email: data.user.email || '',
-        });
+        };
+        
+        setUser(userData);
+        
+        // Fetch profile after sign in
+        const profileData = await fetchProfile(userData.id);
+        setProfile(profileData);
         
         toast({
           title: "Login bem-sucedido",
           description: "Bem-vindo de volta!",
         });
         
-        return { user: data.user as User };
+        return { user: userData };
       }
       
       return {};
@@ -162,7 +228,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           title: "Conta criada com sucesso",
           description: "Você já pode fazer login.",
         });
-        return { user: data.user as User };
+        return { user: {
+          id: data.user.id,
+          email: data.user.email || '',
+        }};
       }
       
       return {};
@@ -184,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       await supabase.auth.signOut();
       setUser(null);
+      setProfile(null);
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
@@ -203,11 +273,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user,
+      profile,
       loading,
       initialized,
       signIn,
       signUp,
-      signOut
+      signOut,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>
