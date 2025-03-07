@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase"; // Updated import path
+import { useAuth } from "@/context/auth";
+import { supabase } from "@/lib/supabase";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,12 +31,10 @@ const Perfil = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Verificar autenticação e redirecionar se necessário
   useEffect(() => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
-        // Verificar se temos uma sessão válida
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
@@ -47,10 +45,8 @@ const Perfil = () => {
         
         console.log('Sessão encontrada, atualizando perfil...');
         
-        // Atualizar o perfil usando a função do contexto
         await refreshProfile();
         
-        // Verificar se temos um perfil
         if (!profile) {
           console.log('Perfil não encontrado após refresh');
           toast({
@@ -73,30 +69,26 @@ const Perfil = () => {
     };
 
     checkAuth();
-  }, [navigate, refreshProfile, toast]); // Adicionando dependências necessárias
-  
-  // Atualizar estados locais quando o perfil mudar
+  }, [navigate, refreshProfile, toast]);
+
   useEffect(() => {
-    console.log('Perfil atualizado:', profile);
     if (profile) {
       setUsername(profile.username || "");
       setAvatarUrl(profile.avatar_url || null);
-      setIsLoading(false); // Garantir que o loading termine quando o perfil estiver disponível
+      setIsLoading(false);
     }
   }, [profile]);
-  
-  // Garantir que o loading termine mesmo se não houver perfil
+
   useEffect(() => {
     if (!loading && !profile) {
       setIsLoading(false);
     }
   }, [loading, profile]);
 
-  // Handle avatar file selection
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) { // 5MB
+      if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "Arquivo muito grande",
           description: "O avatar deve ter no máximo 5MB",
@@ -113,20 +105,17 @@ const Perfil = () => {
     }
   };
 
-  // Upload otimizado do avatar
   const uploadAvatar = async () => {
     if (!avatarFile || !user) return null;
     
     try {
       setAvatarUploading(true);
       
-      // Criar nome do arquivo
       const fileExt = avatarFile.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}.${fileExt}`;
       
-      // Comprimir imagem se necessário
       let fileToUpload = avatarFile;
-      if (avatarFile.size > 1024 * 1024) { // > 1MB
+      if (avatarFile.size > 1024 * 1024) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
@@ -137,7 +126,6 @@ const Perfil = () => {
           img.src = URL.createObjectURL(avatarFile);
         });
         
-        // Calcular dimensões mantendo proporção
         const maxSize = 800;
         let width = img.width;
         let height = img.height;
@@ -154,7 +142,6 @@ const Perfil = () => {
         canvas.height = height;
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Converter para Blob
         const blob = await new Promise<Blob>((resolve) => {
           canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.8);
         });
@@ -162,7 +149,6 @@ const Perfil = () => {
         fileToUpload = new File([blob], fileName, { type: 'image/jpeg' });
       }
 
-      // Upload do arquivo
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, fileToUpload, {
@@ -173,7 +159,6 @@ const Perfil = () => {
         
       if (uploadError) throw uploadError;
       
-      // Gerar URL pública
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
@@ -196,14 +181,12 @@ const Perfil = () => {
     }
   };
 
-  // Salvar alterações do perfil de forma otimizada
   const handleSaveProfile = async () => {
     if (!user) return;
     
     try {
       setIsSaving(true);
       
-      // Preparar dados para atualização
       const updates: {
         username: string;
         avatar_url: string | null;
@@ -214,7 +197,6 @@ const Perfil = () => {
         updated_at: new Date().toISOString()
       };
       
-      // Upload do avatar se necessário
       if (avatarFile) {
         const newAvatarUrl = await uploadAvatar();
         if (newAvatarUrl) {
@@ -222,7 +204,6 @@ const Perfil = () => {
         }
       }
       
-      // Verificar se há mudanças reais
       const hasChanges = 
         updates.username !== profile?.username ||
         updates.avatar_url !== profile?.avatar_url;
@@ -235,7 +216,6 @@ const Perfil = () => {
         return;
       }
       
-      // Atualizar perfil no Supabase
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -243,13 +223,11 @@ const Perfil = () => {
         
       if (error) throw error;
       
-      // Limpar estados locais
       if (avatarFile) {
         setAvatarFile(null);
         setAvatarUrl(updates.avatar_url);
       }
       
-      // Atualizar contexto e notificar usuário
       await refreshProfile();
       
       toast({
@@ -267,8 +245,7 @@ const Perfil = () => {
       setIsSaving(false);
     }
   };
-  
-  // Plans array for display
+
   const plans = [
     {
       id: "basic",
@@ -307,12 +284,11 @@ const Perfil = () => {
       current: false
     }
   ];
-  
+
   const handleChangePlan = (planId: string) => {
     navigate("/dashboard/assinatura?plan=" + planId);
   };
 
-  // Componente de loading memoizado
   const LoadingSpinner = React.memo(() => (
     <DashboardLayout>
       <div className="flex items-center justify-center h-64">

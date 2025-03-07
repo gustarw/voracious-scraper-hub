@@ -5,7 +5,7 @@ import { Hero } from "@/components/home/Hero";
 import { Features } from "@/components/home/Features";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { CallToAction } from "@/components/home/CallToAction";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 

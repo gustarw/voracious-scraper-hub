@@ -2,39 +2,8 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  email: string;
-}
-
-interface Profile {
-  id: string;
-  username?: string;
-  email?: string;
-  avatar_url?: string;
-  updated_at?: string;
-}
-
-interface SignInResponse {
-  user?: User;
-  error?: Error;
-}
-
-interface SignUpOptions {
-  username?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  profile: Profile | null;
-  loading: boolean;
-  initialized: boolean;
-  signIn: (email: string, password: string) => Promise<SignInResponse>;
-  signUp: (email: string, password: string, options?: SignUpOptions) => Promise<SignInResponse>;
-  signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-}
+import { AuthContextType, User, Profile, SignInResponse, SignUpOptions } from './types';
+import { fetchProfile, setupAvatarBucket } from './authUtils';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -44,27 +13,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
-
-  // Function to fetch user profile from database with optimized query
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, email, avatar_url, updated_at')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return null;
-      }
-
-      return data as Profile;
-    } catch (error) {
-      console.error('Unexpected error fetching profile:', error);
-      return null;
-    }
-  };
 
   // Public method to refresh the profile
   const refreshProfile = async () => {
@@ -79,6 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Initialize avatar bucket
+    setupAvatarBucket();
+    
     // Check active session
     const getSession = async () => {
       try {
