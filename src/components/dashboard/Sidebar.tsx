@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,7 @@ import {
   User,
   CreditCard
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 
 type SidebarItem = {
   icon: React.ElementType;
@@ -32,7 +31,6 @@ export function Sidebar() {
   const location = useLocation();
   const { profile } = useAuth();
   
-  // Check if window width is less than 768px and collapse sidebar automatically
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
@@ -40,13 +38,10 @@ export function Sidebar() {
       }
     };
     
-    // Set initial state
     handleResize();
     
-    // Add event listener
     window.addEventListener('resize', handleResize);
     
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
     };
