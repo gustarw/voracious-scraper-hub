@@ -5,17 +5,14 @@ import { useAuth } from "@/context/auth";
 import { supabase } from "@/lib/supabase";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, User } from "lucide-react";
+import { User } from "lucide-react";
 
 // Imported components
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ProfileDetails } from "@/components/profile/ProfileDetails";
-import { SubscriptionPlans } from "@/components/profile/SubscriptionPlans";
 import { ProfileLoadingSpinner } from "@/components/profile/ProfileLoadingSpinner";
 import { ProfileNotFound } from "@/components/profile/ProfileNotFound";
 import { useProfileAvatar } from "@/hooks/useProfileAvatar";
-import { subscriptionPlans } from "@/data/subscriptionPlans";
 
 const Perfil = () => {
   const { user, profile, loading, refreshProfile } = useAuth();
@@ -164,10 +161,6 @@ const Perfil = () => {
     }
   };
 
-  const handleChangePlan = (planId: string) => {
-    navigate("/dashboard/assinatura?plan=" + planId);
-  };
-
   if (loading || isLoading) {
     return <ProfileLoadingSpinner />;
   }
@@ -182,48 +175,33 @@ const Perfil = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Perfil do Usuário</h1>
         <p className="text-scrapvorn-gray">
-          Gerencie suas informações pessoais e plano de assinatura.
+          Gerencie suas informações pessoais.
         </p>
       </div>
       
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="mb-6 bg-black/40 p-1 rounded-md border border-scrapvorn-orange/20">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-scrapvorn-orange/20 data-[state=active]:text-white hover:bg-scrapvorn-orange/10 transition-colors">
-            <User className="mr-2 h-4 w-4 text-scrapvorn-orange" />
-            Informações Pessoais
-          </TabsTrigger>
-          <TabsTrigger value="plan" className="data-[state=active]:bg-scrapvorn-orange/20 data-[state=active]:text-white hover:bg-scrapvorn-orange/10 transition-colors">
-            <CreditCard className="mr-2 h-4 w-4 text-scrapvorn-orange" />
-            Plano de Assinatura
-          </TabsTrigger>
-        </TabsList>
+      <div className="bg-black/20 p-6 rounded-xl border border-scrapvorn-orange/20 mb-6">
+        <div className="flex items-center mb-4">
+          <User className="mr-2 h-5 w-5 text-scrapvorn-orange" />
+          <h2 className="text-xl font-semibold text-white">Informações Pessoais</h2>
+        </div>
         
-        <TabsContent value="profile">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ProfileAvatar 
-              avatarUrl={avatarUrl} 
-              username={username}
-              onAvatarChange={handleAvatarChange}
-              isUploading={avatarUploading}
-            />
-            
-            <ProfileDetails 
-              email={user?.email || ""}
-              username={username}
-              onUsernameChange={(e) => setUsername(e.target.value)}
-              onSave={handleSaveProfile}
-              isSaving={isSaving}
-            />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="plan">
-          <SubscriptionPlans 
-            plans={subscriptionPlans} 
-            onChangePlan={handleChangePlan} 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ProfileAvatar 
+            avatarUrl={avatarUrl} 
+            username={username}
+            onAvatarChange={handleAvatarChange}
+            isUploading={avatarUploading}
           />
-        </TabsContent>
-      </Tabs>
+          
+          <ProfileDetails 
+            email={user?.email || ""}
+            username={username}
+            onUsernameChange={(e) => setUsername(e.target.value)}
+            onSave={handleSaveProfile}
+            isSaving={isSaving}
+          />
+        </div>
+      </div>
     </DashboardLayout>
   );
 };

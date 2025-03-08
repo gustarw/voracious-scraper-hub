@@ -78,8 +78,11 @@ export const useProfileAvatar = (userId: string | undefined, onSuccess: (url: st
       
       console.log("Public URL generated:", urlData.publicUrl);
       
-      onSuccess(urlData.publicUrl);
-      return urlData.publicUrl;
+      // Add a timestamp query parameter to force cache busting
+      const publicUrlWithTimestamp = `${urlData.publicUrl}?t=${new Date().getTime()}`;
+      
+      onSuccess(publicUrlWithTimestamp);
+      return publicUrlWithTimestamp;
     } catch (error) {
       console.error("Error uploading avatar:", error);
       toast({

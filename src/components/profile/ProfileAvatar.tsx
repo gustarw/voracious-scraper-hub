@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ export const ProfileAvatar = ({
   };
 
   return (
-    <Card className="md:col-span-1 bg-white/5 border-scrapvorn-gray/10">
+    <Card className="md:col-span-1 bg-white/5 border-scrapvorn-gray/10 shadow-lg">
       <CardHeader>
         <CardTitle className="text-white">Foto de Perfil</CardTitle>
         <CardDescription className="text-scrapvorn-gray">
@@ -47,30 +47,34 @@ export const ProfileAvatar = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
-        <Avatar className="w-32 h-32 mb-6">
-          {avatarUrl ? (
-            <AvatarImage 
-              src={avatarUrl} 
-              alt="Avatar do usuário"
-              onError={() => {
-                console.error("Error loading avatar image");
-              }}
-            />
-          ) : null}
-          <AvatarFallback className="bg-scrapvorn-orange text-black text-2xl">
-            {username ? username.substring(0, 2).toUpperCase() : (
-              <ImageIcon className="w-12 h-12 text-black/50" />
-            )}
-          </AvatarFallback>
-        </Avatar>
+        <div className="w-32 h-32 relative rounded-full mb-6 bg-scrapvorn-orange/10 overflow-hidden border-2 border-scrapvorn-orange/30 p-1">
+          <Avatar className="w-full h-full">
+            {avatarUrl ? (
+              <AvatarImage 
+                src={avatarUrl} 
+                alt="Avatar do usuário"
+                className="object-cover"
+                onError={(e) => {
+                  console.error("Error loading avatar image");
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : null}
+            <AvatarFallback className="bg-scrapvorn-orange text-black text-2xl">
+              {username ? username.substring(0, 2).toUpperCase() : (
+                <ImageIcon className="w-12 h-12 text-black/50" />
+              )}
+            </AvatarFallback>
+          </Avatar>
+        </div>
         
         <div className="w-full">
           <Label 
             htmlFor="avatar" 
-            className="group w-full cursor-pointer flex items-center justify-center gap-2 py-2 border border-dashed border-scrapvorn-gray/30 rounded-md hover:bg-white/5 transition-colors text-white/70 hover:text-white"
+            className="group w-full cursor-pointer flex items-center justify-center gap-2 py-3 border border-dashed border-scrapvorn-orange/30 rounded-md hover:bg-scrapvorn-orange/10 transition-colors text-white/70 hover:text-white"
           >
-            <Upload className="h-4 w-4 text-white/70 group-hover:text-white" />
-            {isUploading ? 'Enviando...' : 'Carregar Imagem'}
+            <Upload className="h-4 w-4 text-scrapvorn-orange" />
+            {isUploading ? 'Enviando...' : 'Carregar Nova Imagem'}
           </Label>
           <Input 
             id="avatar" 
