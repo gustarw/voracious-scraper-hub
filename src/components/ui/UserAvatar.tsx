@@ -53,8 +53,21 @@ export const UserAvatar = ({ className }: UserAvatarProps) => {
     try {
       setUploading(true);
       const file = event.target.files[0];
+      
+      // Validate file size
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O avatar deve ter no máximo 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}.${fileExt}`;
+      
+      console.log("Uploading avatar from UserAvatar component...");
       
       // Upload avatar to storage
       const { error: uploadError } = await supabase.storage
@@ -64,7 +77,10 @@ export const UserAvatar = ({ className }: UserAvatarProps) => {
           contentType: file.type
         });
         
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
       
       // Get the public URL
       const { data: urlData } = supabase.storage
@@ -74,6 +90,8 @@ export const UserAvatar = ({ className }: UserAvatarProps) => {
       if (!urlData.publicUrl) {
         throw new Error("Falha ao obter URL pública");
       }
+      
+      console.log("Public URL obtained:", urlData.publicUrl);
       
       // Update profile with new avatar URL
       const { error: updateError } = await supabase
@@ -115,11 +133,25 @@ export const UserAvatar = ({ className }: UserAvatarProps) => {
     return "US";
   };
   
+  // Add loading state to avatar if profile is missing
+  const avatarUrl = profile?.avatar_url;
+  
+  console.log("UserAvatar rendering with URL:", avatarUrl);
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className={`cursor-pointer ${className}`}>
-          <AvatarImage src={profile?.avatar_url || undefined} />
+          {avatarUrl ? (
+            <AvatarImage 
+              src={avatarUrl} 
+              alt="Avatar do usuário"
+              onError={(e) => {
+                console.error("Error loading avatar image in dropdown");
+                // Optional: add fallback logic here
+              }}
+            />
+          ) : null}
           <AvatarFallback className="bg-scrapvorn-orange text-black">
             {getInitials()}
           </AvatarFallback>

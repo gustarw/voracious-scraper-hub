@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth";
@@ -71,10 +72,12 @@ const Perfil = () => {
     checkAuth();
   }, [navigate, refreshProfile, toast]);
 
+  // Update local state when profile data changes
   useEffect(() => {
     if (profile) {
       setUsername(profile.username || "");
       setAvatarUrl(profile.avatar_url || null);
+      console.log("Profile updated, avatar URL:", profile.avatar_url);
       setIsLoading(false);
     }
   }, [profile]);
@@ -98,9 +101,12 @@ const Perfil = () => {
       }
       
       setAvatarFile(file);
+      
+      // Create a local preview URL for immediate feedback
       const objectUrl = URL.createObjectURL(file);
       setAvatarUrl(objectUrl);
       
+      // Cleanup function to revoke the object URL when component unmounts
       return () => URL.revokeObjectURL(objectUrl);
     }
   };
@@ -115,6 +121,8 @@ const Perfil = () => {
       const fileName = `${user.id}.${fileExt}`;
       
       let fileToUpload = avatarFile;
+      
+      // Compress large images
       if (avatarFile.size > 1024 * 1024) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -149,6 +157,7 @@ const Perfil = () => {
         fileToUpload = new File([blob], fileName, { type: 'image/jpeg' });
       }
 
+      console.log("Uploading avatar to storage...");
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, fileToUpload, {
@@ -157,8 +166,12 @@ const Perfil = () => {
           cacheControl: '3600'
         });
         
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
       
+      console.log("Avatar uploaded, getting public URL...");
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
@@ -167,6 +180,7 @@ const Perfil = () => {
         throw new Error('URL pública não gerada');
       }
       
+      console.log("Public URL generated:", urlData.publicUrl);
       return urlData.publicUrl;
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -197,9 +211,12 @@ const Perfil = () => {
         updated_at: new Date().toISOString()
       };
       
+      // If user has selected a new avatar, upload it
       if (avatarFile) {
+        console.log("New avatar file selected, uploading...");
         const newAvatarUrl = await uploadAvatar();
         if (newAvatarUrl) {
+          console.log("New avatar URL:", newAvatarUrl);
           updates.avatar_url = newAvatarUrl;
         }
       }
@@ -216,6 +233,7 @@ const Perfil = () => {
         return;
       }
       
+      console.log("Updating profile with:", updates);
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -223,11 +241,15 @@ const Perfil = () => {
         
       if (error) throw error;
       
-      if (avatarFile) {
-        setAvatarFile(null);
+      // Clear the file selection after successful upload
+      setAvatarFile(null);
+      
+      // Update local state with new avatar URL
+      if (updates.avatar_url) {
         setAvatarUrl(updates.avatar_url);
       }
       
+      // Refresh profile data from server
       await refreshProfile();
       
       toast({
@@ -350,7 +372,16 @@ const Perfil = () => {
               </CardHeader>
               <CardContent className="flex flex-col items-center">
                 <Avatar className="w-32 h-32 mb-6">
-                  <AvatarImage src={avatarUrl || undefined} />
+                  {avatarUrl ? (
+                    <AvatarImage 
+                      src={avatarUrl} 
+                      alt="Avatar do usuário"
+                      onError={() => {
+                        console.error("Error loading avatar image");
+                        // If image fails to load, we can add fallback logic here
+                      }}
+                    />
+                  ) : null}
                   <AvatarFallback className="bg-scrapvorn-orange text-black text-2xl">
                     {username ? username.substring(0, 2).toUpperCase() : (
                       <ImageIcon className="w-12 h-12 text-black/50" />
@@ -364,7 +395,7 @@ const Perfil = () => {
                     className="group w-full cursor-pointer flex items-center justify-center gap-2 py-2 border border-dashed border-scrapvorn-gray/30 rounded-md hover:bg-white/5 transition-colors text-white/70 hover:text-white"
                   >
                     <Upload className="h-4 w-4 text-white/70 group-hover:text-white" />
-                    Carregar Imagem
+                    {avatarFile ? 'Imagem selecionada' : 'Carregar Imagem'}
                   </Label>
                   <Input 
                     id="avatar" 
@@ -372,9 +403,10 @@ const Perfil = () => {
                     accept="image/*" 
                     onChange={handleAvatarChange}
                     className="hidden"
+                    disabled={isSaving || avatarUploading}
                   />
                   <p className="text-xs text-white/50 mt-2 text-center">
-                    Formatos suportados: JPG, PNG, GIF (max. 2MB)
+                    Formatos suportados: JPG, PNG, GIF (max. 5MB)
                   </p>
                 </div>
               </CardContent>
