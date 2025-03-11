@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,28 +61,19 @@ export const WebScraper = () => {
     setStatus("Iniciando extração...");
     
     try {
-      // Get auth token for the API call
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
         throw new Error("Sessão expirada");
       }
-      
-      const response = await fetch("/api/crawl-website", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ url }),
+
+      const { data: result, error: fnError } = await supabase.functions.invoke('crawl-website', {
+        body: { url }
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Falha ao extrair dados");
+
+      if (fnError) {
+        throw new Error(fnError.message || "Falha ao extrair dados");
       }
-      
-      const result = await response.json();
       
       if (!result.success) {
         throw new Error(result.error || "Falha ao iniciar a extração");
@@ -92,7 +82,6 @@ export const WebScraper = () => {
       setTaskId(result.taskId);
       setStatus(`Extração em andamento: ${result.completed || 0}/${result.total || 'N/A'} páginas`);
       
-      // After initiating the task, poll for results
       pollScrapingResults(result.taskId);
       
       toast({
@@ -120,7 +109,6 @@ export const WebScraper = () => {
         throw new Error("Sessão expirada");
       }
       
-      // Get task status
       const { data, error } = await supabase
         .from('scraping_tasks')
         .select('*')
@@ -130,7 +118,6 @@ export const WebScraper = () => {
       if (error) throw error;
       
       if (data.status === 'completed') {
-        // Task is complete, get the scraped data
         const { data: scrapedData, error: scrapedError } = await supabase
           .from('scraped_data')
           .select('data')
@@ -147,10 +134,8 @@ export const WebScraper = () => {
         return;
       }
       
-      // Update the status
       setStatus(`Extração em andamento: ${data.completed || 0}/${data.total || 'N/A'} páginas`);
       
-      // Continue polling
       setTimeout(() => pollScrapingResults(taskId), 2000);
     } catch (err: any) {
       console.error("Erro ao verificar o status da extração:", err);
@@ -266,3 +251,4 @@ export const WebScraper = () => {
     </Card>
   );
 };
+
