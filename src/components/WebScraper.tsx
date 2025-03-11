@@ -75,8 +75,8 @@ export const WebScraper = () => {
         throw new Error(fnError.message || "Falha ao extrair dados");
       }
       
-      if (!result.success) {
-        throw new Error(result.error || "Falha ao iniciar a extração");
+      if (!result || !result.success) {
+        throw new Error(result?.error || "Falha ao iniciar a extração");
       }
       
       setTaskId(result.taskId);
@@ -109,37 +109,43 @@ export const WebScraper = () => {
         throw new Error("Sessão expirada");
       }
       
-      const { data, error } = await supabase
+      const { data: taskData, error: taskError } = await supabase
         .from('scraping_tasks')
         .select('*')
         .eq('id', taskId)
         .single();
       
-      if (error) throw error;
+      if (taskError) throw taskError;
       
-      if (data.status === 'completed') {
+      if (taskData.status === 'completed') {
         const { data: scrapedData, error: scrapedError } = await supabase
           .from('scraped_data')
-          .select('data')
+          .select('*')
           .eq('task_id', taskId);
         
         if (scrapedError) throw scrapedError;
         
-        setData(scrapedData.map(item => item.data));
-        setStatus("Extração concluída");
-        return;
-      } else if (data.status === 'error') {
+        if (scrapedData && scrapedData.length > 0) {
+          setData(scrapedData.map(item => item.data));
+          setStatus("Extração concluída com sucesso!");
+          return;
+        } else {
+          setStatus("Extração concluída, mas nenhum dado foi encontrado.");
+          return;
+        }
+      } else if (taskData.status === 'error') {
         setError("A extração falhou. Por favor, tente novamente.");
         setStatus("Erro na extração");
         return;
       }
       
-      setStatus(`Extração em andamento: ${data.completed || 0}/${data.total || 'N/A'} páginas`);
+      setStatus(`Extração em andamento: ${taskData.completed || 0}/${taskData.total || 'N/A'} páginas`);
       
       setTimeout(() => pollScrapingResults(taskId), 2000);
     } catch (err: any) {
       console.error("Erro ao verificar o status da extração:", err);
       setError(err.message);
+      setStatus("Erro ao verificar status da extração");
     }
   };
   
@@ -196,7 +202,7 @@ export const WebScraper = () => {
               <div className="flex items-center gap-2">
                 {loading ? (
                   <Loader2 className="h-4 w-4 text-scrapvorn-orange animate-spin" />
-                ) : status.includes("concluída") ? (
+                ) : status.includes("sucesso") ? (
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
                 ) : status.includes("Erro") ? (
                   <AlertCircle className="h-4 w-4 text-red-500" />
@@ -240,7 +246,7 @@ export const WebScraper = () => {
                 </Button>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                <pre className="text-xs text-white/70 p-2">
+                <pre className="text-xs text-white/70 p-2 whitespace-pre-wrap break-words">
                   {JSON.stringify(data, null, 2)}
                 </pre>
               </div>
@@ -251,4 +257,3 @@ export const WebScraper = () => {
     </Card>
   );
 };
-
