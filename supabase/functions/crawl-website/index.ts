@@ -12,21 +12,15 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Check if we have the API key
     if (!FIRECRAWL_API_KEY) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Firecrawl API key not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      throw new Error('Firecrawl API key not configured');
     }
 
-    // Get the user ID from the JWT token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -35,7 +29,6 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client and get the user ID from the JWT
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
@@ -47,7 +40,6 @@ serve(async (req) => {
       );
     }
 
-    // Get the URL from the request body
     const { url } = await req.json();
     if (!url) {
       return new Response(
@@ -56,7 +48,6 @@ serve(async (req) => {
       );
     }
 
-    // Make the request to the Firecrawl API
     console.log('Making request to Firecrawl API for URL:', url);
     const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/crawl', {
       method: 'POST',
@@ -69,11 +60,14 @@ serve(async (req) => {
         limit: 100,
         scrapeOptions: {
           formats: ['markdown', 'html'],
+          waitForSelector: 'body',
+          timeout: 30000
         }
       })
     });
 
     const firecrawlData = await firecrawlResponse.json();
+    console.log('Firecrawl API response:', firecrawlData);
 
     if (!firecrawlResponse.ok) {
       console.error('Firecrawl API error:', firecrawlData);
@@ -83,7 +77,6 @@ serve(async (req) => {
       );
     }
 
-    // Create a new task in the database
     const { data: taskData, error: taskError } = await supabaseClient
       .from('scraping_tasks')
       .insert({
@@ -106,20 +99,27 @@ serve(async (req) => {
       );
     }
 
-    // Start a background process to store the scraped data if available
     if (firecrawlData.data && firecrawlData.data.length > 0) {
-      // Store the scraped data
       for (const item of firecrawlData.data) {
-        await supabaseClient
+        const { error: insertError } = await supabaseClient
           .from('scraped_data')
           .insert({
             task_id: taskData.id,
             data: item
           });
+          
+        if (insertError) {
+          console.error('Error inserting scraped data:', insertError);
+        }
       }
+      
+      // Update task status to completed
+      await supabaseClient
+        .from('scraping_tasks')
+        .update({ status: 'completed' })
+        .eq('id', taskData.id);
     }
 
-    // Return the task ID and initial status
     return new Response(
       JSON.stringify({
         success: true,

@@ -15,8 +15,11 @@ export const WebScraper = () => {
   const [error, setError] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [pollingAttempts, setPollingAttempts] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  const MAX_POLLING_ATTEMPTS = 30; // 1 minute (2s * 30)
   
   const isValidUrl = (urlString: string): boolean => {
     try {
@@ -59,6 +62,7 @@ export const WebScraper = () => {
     setError(null);
     setData(null);
     setStatus("Iniciando extração...");
+    setPollingAttempts(0);
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -82,7 +86,7 @@ export const WebScraper = () => {
       setTaskId(result.taskId);
       setStatus(`Extração em andamento: ${result.completed || 0}/${result.total || 'N/A'} páginas`);
       
-      pollScrapingResults(result.taskId);
+      await pollScrapingResults(result.taskId);
       
       toast({
         title: "Extração iniciada",
@@ -96,13 +100,21 @@ export const WebScraper = () => {
         description: err.message || "Ocorreu um erro ao tentar extrair os dados",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
   };
   
   const pollScrapingResults = async (taskId: string) => {
     try {
+      if (pollingAttempts >= MAX_POLLING_ATTEMPTS) {
+        setError("Tempo limite de extração excedido");
+        setStatus("Erro: Tempo limite excedido");
+        setLoading(false);
+        return;
+      }
+
+      setPollingAttempts(prev => prev + 1);
+      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -115,7 +127,11 @@ export const WebScraper = () => {
         .eq('id', taskId)
         .single();
       
-      if (taskError) throw taskError;
+      if (taskError) {
+        throw new Error("Erro ao verificar status da tarefa");
+      }
+      
+      console.log("Task status:", taskData.status);
       
       if (taskData.status === 'completed') {
         const { data: scrapedData, error: scrapedError } = await supabase
@@ -123,19 +139,24 @@ export const WebScraper = () => {
           .select('*')
           .eq('task_id', taskId);
         
-        if (scrapedError) throw scrapedError;
+        if (scrapedError) {
+          throw new Error("Erro ao buscar dados extraídos");
+        }
         
         if (scrapedData && scrapedData.length > 0) {
           setData(scrapedData.map(item => item.data));
           setStatus("Extração concluída com sucesso!");
+          setLoading(false);
           return;
         } else {
           setStatus("Extração concluída, mas nenhum dado foi encontrado.");
+          setLoading(false);
           return;
         }
       } else if (taskData.status === 'error') {
         setError("A extração falhou. Por favor, tente novamente.");
         setStatus("Erro na extração");
+        setLoading(false);
         return;
       }
       
@@ -146,9 +167,10 @@ export const WebScraper = () => {
       console.error("Erro ao verificar o status da extração:", err);
       setError(err.message);
       setStatus("Erro ao verificar status da extração");
+      setLoading(false);
     }
   };
-  
+
   const handleExportData = () => {
     if (!data) return;
     
