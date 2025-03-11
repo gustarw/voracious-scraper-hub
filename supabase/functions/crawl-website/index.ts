@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import * as postgres from 'https://deno.land/x/postgres@v0.14.2/mod.ts';
 
 const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -29,11 +28,13 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    // Verify user with Supabase auth
+    const { user, error: userError } = await getUser(token);
     
     if (userError || !user) {
+      console.error('User authentication error:', userError);
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid user token' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
@@ -48,7 +49,23 @@ serve(async (req) => {
       );
     }
 
-    console.log('Making request to Firecrawl API for URL:', url);
+    console.log(`[${user.id}] Making request to Firecrawl API for URL: ${url}`);
+    
+    // Create task record before sending request to Firecrawl
+    const { data: taskData, error: taskCreateError } = await createScrapingTask(user.id, url);
+    
+    if (taskCreateError) {
+      console.error('Error creating task record:', taskCreateError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to create scraping task' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+    
+    const taskId = taskData.id;
+    console.log(`Created task with ID ${taskId} for user ${user.id}`);
+
+    // Make request to Firecrawl API
     const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/crawl', {
       method: 'POST',
       headers: {
@@ -61,70 +78,56 @@ serve(async (req) => {
         scrapeOptions: {
           formats: ['markdown', 'html'],
           waitForSelector: 'body',
-          timeout: 30000
+          timeout: 60000 // Increased timeout to 60 seconds
         }
       })
     });
 
     const firecrawlData = await firecrawlResponse.json();
-    console.log('Firecrawl API response:', firecrawlData);
+    console.log(`Firecrawl API response for task ${taskId}:`, JSON.stringify(firecrawlData).substring(0, 300) + '...');
 
     if (!firecrawlResponse.ok) {
-      console.error('Firecrawl API error:', firecrawlData);
+      console.error(`Firecrawl API error for task ${taskId}:`, firecrawlData);
+      
+      // Update task status to error
+      await updateTaskStatus(taskId, 'error', firecrawlData.completed || 0, firecrawlData.total || 0);
+      
       return new Response(
-        JSON.stringify({ success: false, error: firecrawlData.message || 'Firecrawl API error' }),
+        JSON.stringify({ 
+          success: false, 
+          error: firecrawlData.message || 'Firecrawl API error',
+          taskId
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: firecrawlResponse.status }
       );
     }
 
-    const { data: taskData, error: taskError } = await supabaseClient
-      .from('scraping_tasks')
-      .insert({
-        user_id: user.id,
-        url,
-        status: 'processing',
-        completed: firecrawlData.completed || 0,
-        total: firecrawlData.total || 0,
-        credits_used: firecrawlData.creditsUsed || 0,
-        expires_at: firecrawlData.expiresAt
-      })
-      .select()
-      .single();
+    // Update task with info from Firecrawl
+    await updateTaskStatus(
+      taskId, 
+      firecrawlData.data && firecrawlData.data.length > 0 ? 'completed' : 'processing',
+      firecrawlData.completed || 0,
+      firecrawlData.total || 0,
+      firecrawlData.creditsUsed || 0,
+      firecrawlData.expiresAt
+    );
 
-    if (taskError) {
-      console.error('Error creating task:', taskError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Failed to create task' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
+    // Store scraped data if available
     if (firecrawlData.data && firecrawlData.data.length > 0) {
       for (const item of firecrawlData.data) {
-        const { error: insertError } = await supabaseClient
-          .from('scraped_data')
-          .insert({
-            task_id: taskData.id,
-            data: item
-          });
+        const { error: insertError } = await storeScrapedData(taskId, item);
           
         if (insertError) {
-          console.error('Error inserting scraped data:', insertError);
+          console.error(`Error inserting scraped data for task ${taskId}:`, insertError);
         }
       }
-      
-      // Update task status to completed
-      await supabaseClient
-        .from('scraping_tasks')
-        .update({ status: 'completed' })
-        .eq('id', taskData.id);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        taskId: taskData.id,
-        status: 'processing',
+        taskId,
+        status: firecrawlData.data && firecrawlData.data.length > 0 ? 'completed' : 'processing',
         url,
         completed: firecrawlData.completed || 0,
         total: firecrawlData.total || 0,
@@ -135,7 +138,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error:', error);
+    console.error('Unexpected error in crawl-website edge function:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message || 'Internal server error' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -143,70 +146,112 @@ serve(async (req) => {
   }
 });
 
-function createClient(supabaseUrl: string, supabaseKey: string) {
-  return {
-    auth: {
-      getUser: async (token: string) => {
-        try {
-          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              apikey: supabaseKey
-            }
-          });
-          
-          if (!response.ok) {
-            return { data: {}, error: new Error('Failed to get user') };
-          }
-          
-          const user = await response.json();
-          return { data: { user }, error: null };
-        } catch (error) {
-          return { data: {}, error };
-        }
+async function getUser(token: string) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY
       }
-    },
-    from: (table: string) => {
-      return {
-        insert: (data: any) => {
-          const query = {
-            table,
-            data,
-            returning: '*'
-          };
-          
-          return {
-            select: () => {
-              return {
-                single: async () => {
-                  try {
-                    const databaseUrl = `${supabaseUrl}/rest/v1/${table}`;
-                    const response = await fetch(databaseUrl, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation',
-                        Authorization: `Bearer ${supabaseKey}`,
-                        apikey: supabaseKey
-                      },
-                      body: JSON.stringify(data)
-                    });
-                    
-                    if (!response.ok) {
-                      return { data: null, error: new Error('Failed to insert data') };
-                    }
-                    
-                    const responseData = await response.json();
-                    return { data: responseData[0], error: null };
-                  } catch (error) {
-                    return { data: null, error };
-                  }
-                }
-              };
-            }
-          };
-        }
-      };
+    });
+    
+    if (!response.ok) {
+      return { user: null, error: new Error('Failed to get user') };
     }
-  };
+    
+    const user = await response.json();
+    return { user, error: null };
+  } catch (error) {
+    return { user: null, error };
+  }
+}
+
+async function createScrapingTask(userId: string, url: string) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/scraping_tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        url,
+        status: 'processing'
+      })
+    });
+    
+    if (!response.ok) {
+      return { data: null, error: new Error(`Failed to create task: ${response.statusText}`) };
+    }
+    
+    const data = await response.json();
+    return { data: data[0], error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
+async function updateTaskStatus(
+  taskId: string, 
+  status: string, 
+  completed: number = 0, 
+  total: number = 0,
+  creditsUsed: number = 0,
+  expiresAt?: string
+) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/scraping_tasks?id=eq.${taskId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY
+      },
+      body: JSON.stringify({
+        status,
+        completed,
+        total,
+        credits_used: creditsUsed,
+        expires_at: expiresAt
+      })
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to update task ${taskId} status: ${response.statusText}`);
+      return { error: new Error(`Failed to update task status: ${response.statusText}`) };
+    }
+    
+    return { error: null };
+  } catch (error) {
+    console.error(`Error updating task ${taskId} status:`, error);
+    return { error };
+  }
+}
+
+async function storeScrapedData(taskId: string, data: any) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY
+      },
+      body: JSON.stringify({
+        task_id: taskId,
+        data
+      })
+    });
+    
+    if (!response.ok) {
+      return { error: new Error(`Failed to store scraped data: ${response.statusText}`) };
+    }
+    
+    return { error: null };
+  } catch (error) {
+    return { error };
+  }
 }

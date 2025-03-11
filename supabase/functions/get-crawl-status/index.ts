@@ -26,11 +26,11 @@ serve(async (req) => {
     }
 
     // Create Supabase client and get the user ID from the JWT
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { user, error: userError } = await getUser(token);
     
     if (userError || !user) {
+      console.error('User authentication error:', userError);
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid user token' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
@@ -46,10 +46,13 @@ serve(async (req) => {
       );
     }
 
+    console.log(`[${user.id}] Checking status for task ${taskId}`);
+
     // Get the task from the database
-    const { data: task, error: taskError } = await getTask(supabaseClient, taskId, user.id);
+    const { data: task, error: taskError } = await getTask(taskId, user.id);
     
     if (taskError || !task) {
+      console.error(`Error getting task ${taskId} for user ${user.id}:`, taskError);
       return new Response(
         JSON.stringify({ success: false, error: 'Task not found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
@@ -57,7 +60,11 @@ serve(async (req) => {
     }
 
     // Get the scraped data for the task
-    const { data: scrapedData, error: scrapedDataError } = await getScrapedData(supabaseClient, taskId);
+    const { data: scrapedData, error: scrapedDataError } = await getScrapedData(taskId);
+    
+    if (scrapedDataError) {
+      console.error(`Error getting scraped data for task ${taskId}:`, scrapedDataError);
+    }
 
     // Return the task status and data
     return new Response(
@@ -78,7 +85,27 @@ serve(async (req) => {
   }
 });
 
-async function getTask(client: any, taskId: string, userId: string) {
+async function getUser(token: string) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY
+      }
+    });
+    
+    if (!response.ok) {
+      return { user: null, error: new Error(`Failed to get user: ${response.statusText}`) };
+    }
+    
+    const user = await response.json();
+    return { user, error: null };
+  } catch (error) {
+    return { user: null, error };
+  }
+}
+
+async function getTask(taskId: string, userId: string) {
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/scraping_tasks?id=eq.${taskId}&user_id=eq.${userId}`, {
       headers: {
@@ -88,7 +115,7 @@ async function getTask(client: any, taskId: string, userId: string) {
     });
     
     if (!response.ok) {
-      return { data: null, error: new Error('Failed to get task') };
+      return { data: null, error: new Error(`Failed to get task: ${response.statusText}`) };
     }
     
     const data = await response.json();
@@ -98,7 +125,7 @@ async function getTask(client: any, taskId: string, userId: string) {
   }
 }
 
-async function getScrapedData(client: any, taskId: string) {
+async function getScrapedData(taskId: string) {
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/scraped_data?task_id=eq.${taskId}`, {
       headers: {
@@ -108,38 +135,12 @@ async function getScrapedData(client: any, taskId: string) {
     });
     
     if (!response.ok) {
-      return { data: null, error: new Error('Failed to get scraped data') };
+      return { data: null, error: new Error(`Failed to get scraped data: ${response.statusText}`) };
     }
     
     const data = await response.json();
-    return { data, error: null };
+    return { data: data.map((item: any) => item.data), error: null };
   } catch (error) {
     return { data: null, error };
   }
-}
-
-function createClient(supabaseUrl: string, supabaseKey: string) {
-  return {
-    auth: {
-      getUser: async (token: string) => {
-        try {
-          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              apikey: supabaseKey
-            }
-          });
-          
-          if (!response.ok) {
-            return { data: {}, error: new Error('Failed to get user') };
-          }
-          
-          const user = await response.json();
-          return { data: { user }, error: null };
-        } catch (error) {
-          return { data: {}, error };
-        }
-      }
-    }
-  };
 }
